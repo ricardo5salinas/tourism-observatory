@@ -8,6 +8,122 @@ body {
   background-color: var(--cui-tertiary-bg);
 }
 
+/* Flip card styles for login/recover UI */
+.flip-container {
+  perspective: 1000px;
+}
+
+.flip-card {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+/* Make sure buttons/alignment inside card look good */
+.flip-card .text-right {
+  text-align: right;
+}
+
+@media (max-width: 576px) {
+  .flip-card {
+    min-height: 380px;
+  }
+}
+
+/* Animated background for login page */
+.login-animated {
+  position: relative;
+  overflow: hidden;
+  /* animated gradient */
+  background: linear-gradient(270deg, #0f172a, #1e3a8a, #7c3aed, #0ea5e9);
+  background-size: 800% 800%;
+  animation: gradientMove 12s ease infinite;
+}
+
+.login-animated::before {
+  content: '';
+  position: absolute;
+  left: -10%;
+  top: -20%;
+  width: 50vw;
+  height: 50vh;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), transparent 30%);
+  transform: rotate(15deg);
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+.login-animated::after {
+  content: '';
+  position: absolute;
+  right: -10%;
+  bottom: -10%;
+  width: 40vw;
+  height: 40vh;
+  background: radial-gradient(circle at 70% 70%, rgba(255,255,255,0.04), transparent 30%);
+  transform: rotate(-10deg);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Enhanced card styles for login */
+.login-card {
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.45);
+  background: rgba(255,255,255,0.95);
+  border: 1px solid rgba(255,255,255,0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transform-style: preserve-3d; /* ensure card faces render correctly */
+}
+
+.login-card.flip-card-front,
+.login-card.flip-card-back {
+  padding: 16px 6px;
+  height: 100%;
+}
+
+.login-card h1 {
+  font-size: 1.6rem;
+  margin-bottom: 0.2rem;
+}
+
+.login-card p.text-body-secondary {
+  margin-bottom: 1.2rem;
+  color: rgba(20,20,20,0.6);
+}
+
+.login-card .CButton {
+  border-radius: 8px;
+}
+
 .wrapper {
   width: 100%;
   padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
@@ -64,4 +180,101 @@ body {
   .footer {
     --cui-footer-bg: var(--cui-body-bg);
   }
+}
+
+/* Custom theme overrides: light blue main background, darker blue sidebar */
+:root {
+  --custom-sidebar-bg: #0f5b99; /* darker blue */
+  --custom-sidebar-accent: #ffffff; /* white accents */
+  --custom-sidebar-active-bg: rgba(255,255,255,0.08);
+  --custom-primary: #2b85d6; /* adjusted primary for widgets */
+  --custom-info: #1fb6ff; /* adjusted info color */
+}
+
+/* Restore default page background (no gradient) */
+body {
+  background-color: var(--cui-tertiary-bg);
+}
+
+/* Sidebar styling (CoreUI sidebar elements) */
+.c-sidebar,
+.sidebar {
+  background-color: var(--custom-sidebar-bg) !important;
+  color: var(--custom-sidebar-accent) !important;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+.c-sidebar .nav-link,
+.sidebar .nav-link {
+  color: rgba(255,255,255,0.95) !important;
+}
+
+.c-sidebar .nav-link.active,
+.sidebar .nav-link.active,
+.c-sidebar .nav-link:hover,
+.sidebar .nav-link:hover {
+  background: var(--custom-sidebar-active-bg) !important;
+  color: var(--custom-sidebar-accent) !important;
+}
+
+/* Header accents: light background with subtle blue text */
+.c-header,
+.header {
+  background: #cfefff !important; /* light blue header */
+  color: #08304a !important;
+  border-bottom: 1px solid rgba(8,48,74,0.06);
+}
+
+.c-header .nav-link,
+.header .nav-link,
+.c-header .nav-item,
+.header .nav-item {
+  color: #08304a !important;
+}
+
+/* Content wrapper should use the light body background */
+
+.body {
+  position: relative;
+}
+
+/* Ensure animated background's decorative layers sit behind content */
+.login-animated::before,
+.login-animated::after {
+  z-index: 0;
+}
+.login-animated > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure sidebar brand icons contrast on dark bg */
+.sidebar-brand-full svg,
+.sidebar-brand-narrow svg {
+  filter: brightness(0) invert(1);
+}
+
+/* Quick-actions carousel slide styles */
+.quick-slide {
+  border-radius: 6px 6px 0 0;
+  background-size: cover;
+  background-position: center;
+}
+.quick-slide.slide-1 {
+  background: linear-gradient(90deg, #3e8ef7 0%, #2b6fd6 100%);
+}
+.quick-slide.slide-2 {
+  background: linear-gradient(90deg, #06b6d4 0%, #0891b2 100%);
+}
+.quick-slide.slide-3 {
+  background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+}
+.carousel-caption h4 {
+  color: #062b44;
+}
+
+/* Override coreui primary/info colors to better fit the palette */
+:root {
+  --cui-primary: var(--custom-primary);
+  --cui-info: var(--custom-info);
 }

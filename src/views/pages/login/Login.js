@@ -1,10 +1,9 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState } from 'react'
 import {
+  CAlert,
   CButton,
   CCard,
   CCardBody,
-  CCardGroup,
   CCol,
   CContainer,
   CForm,
@@ -13,69 +12,146 @@ import {
   CInputGroupText,
   CRow,
 } from '@coreui/react'
+import { useNavigate } from 'react-router-dom'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
 
 const Login = () => {
+  const [flipped, setFlipped] = useState(false)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const navigate = useNavigate()
+
+  const validateEmail = (e) => {
+    return /^\S+@\S+\.\S+$/.test(e)
+  }
+
+  const handleLogin = (e) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    if (!username.trim()) {
+      setError('El usuario es obligatorio')
+      return
+    }
+    if (!password || password.length < 4) {
+      setError('La contraseña debe tener al menos 4 caracteres')
+      return
+    }
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+      setSuccess('Inicio de sesión correcto. Redirigiendo...')
+      navigate('/dashboard')
+    }, 900)
+  }
+
+  const handleRecover = (e) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    if (!email.trim()) {
+      setError('Introduce tu correo electrónico')
+      return
+    }
+    if (!validateEmail(email)) {
+      setError('Introduce un correo válido')
+      return
+    }
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+      setSuccess('Si el correo existe, recibirás instrucciones para recuperar tu contraseña')
+      setTimeout(() => setFlipped(false), 1400)
+    }, 900)
+  }
+
   return (
-    <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
+    <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center login-animated">
       <CContainer>
         <CRow className="justify-content-center">
-          <CCol md={8}>
-            <CCardGroup>
-              <CCard className="p-4">
-                <CCardBody>
-                  <CForm>
-                    <h1>Login</h1>
-                    <p className="text-body-secondary">Sign In to your account</p>
-                    <CInputGroup className="mb-3">
-                      <CInputGroupText>
-                        <CIcon icon={cilUser} />
-                      </CInputGroupText>
-                      <CFormInput placeholder="Username" autoComplete="username" />
-                    </CInputGroup>
-                    <CInputGroup className="mb-4">
-                      <CInputGroupText>
-                        <CIcon icon={cilLockLocked} />
-                      </CInputGroupText>
-                      <CFormInput
-                        type="password"
-                        placeholder="Password"
-                        autoComplete="current-password"
-                      />
-                    </CInputGroup>
-                    <CRow>
-                      <CCol xs={6}>
-                        <CButton color="primary" className="px-4">
-                          Login
-                        </CButton>
-                      </CCol>
-                      <CCol xs={6} className="text-right">
-                        <CButton color="link" className="px-0">
-                          Forgot password?
-                        </CButton>
-                      </CCol>
-                    </CRow>
-                  </CForm>
-                </CCardBody>
-              </CCard>
-              <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>
-                <CCardBody className="text-center">
-                  <div>
-                    <h2>Sign up</h2>
-                    <p>
-                      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-                      tempor incididunt ut labore et dolore magna aliqua.
-                    </p>
-                    <Link to="/register">
-                      <CButton color="primary" className="mt-3" active tabIndex={-1}>
-                        Register Now!
-                      </CButton>
-                    </Link>
-                  </div>
-                </CCardBody>
-              </CCard>
-            </CCardGroup>
+          <CCol md={6} lg={5}>
+            <div className="flip-container">
+              <div className={`flip-card ${flipped ? 'flipped' : ''}`}>
+                {/* Front Card */}
+                <CCard className="p-4 login-card flip-card-front">
+                  <CCardBody>
+                    <CForm onSubmit={handleLogin}>
+                      {error && <CAlert color="danger">{error}</CAlert>}
+                      {success && <CAlert color="success">{success}</CAlert>}
+                      <h1>Iniciar sesión</h1>
+                      <p className="text-body-secondary">Accede a tu cuenta</p>
+                        <CInputGroup className="mb-3">
+                        <CInputGroupText>
+                          <CIcon icon={cilUser} />
+                        </CInputGroupText>
+                        <CFormInput value={username} onChange={(ev) => setUsername(ev.target.value)} placeholder="Usuario" autoComplete="username" />
+                      </CInputGroup>
+                        <CInputGroup className="mb-4">
+                        <CInputGroupText>
+                          <CIcon icon={cilLockLocked} />
+                        </CInputGroupText>
+                        <CFormInput
+                          type="password"
+                          placeholder="Contraseña"
+                          autoComplete="current-password"
+                          value={password}
+                          onChange={(ev) => setPassword(ev.target.value)}
+                        />
+                      </CInputGroup>
+                      <CRow>
+                        <CCol xs={6}>
+                          <CButton color="primary" className="px-4" type="submit" disabled={loading}>
+                            {loading ? 'Cargando...' : 'Entrar'}
+                          </CButton>
+                        </CCol>
+                        <CCol xs={6} className="text-right">
+                          <CButton
+                            color="link"
+                            className="px-0"
+                            onClick={() => setFlipped(true)}
+                          >
+                            Recuperar contraseña
+                          </CButton>
+                        </CCol>
+                      </CRow>
+                    </CForm>
+                  </CCardBody>
+                </CCard>
+
+                {/* Back Card */}
+                <CCard className="p-4 login-card flip-card-back">
+                  <CCardBody>
+                    <CForm onSubmit={handleRecover}>
+                      {error && <CAlert color="danger">{error}</CAlert>}
+                      {success && <CAlert color="success">{success}</CAlert>}
+                      <h1>Recuperar contraseña</h1>
+                      <p className="text-body-secondary">Introduce tu correo para recuperar la contraseña</p>
+                      <CInputGroup className="mb-3">
+                        <CInputGroupText>@</CInputGroupText>
+                        <CFormInput value={email} onChange={(ev) => setEmail(ev.target.value)} type="email" placeholder="Correo electrónico" />
+                      </CInputGroup>
+                      <CRow>
+                        <CCol xs={6}>
+                          <CButton color="primary" className="px-4" type="submit" disabled={loading}>
+                            {loading ? 'Enviando...' : 'Enviar'}
+                          </CButton>
+                        </CCol>
+                        <CCol xs={6} className="text-right">
+                          <CButton color="link" className="px-0" onClick={() => setFlipped(false)}>
+                            Volver
+                          </CButton>
+                        </CCol>
+                      </CRow>
+                    </CForm>
+                  </CCardBody>
+                </CCard>
+              </div>
+            </div>
           </CCol>
         </CRow>
       </CContainer>
