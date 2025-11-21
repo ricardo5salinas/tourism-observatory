@@ -6,8 +6,10 @@ import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
 
 import { CBadge, CNavLink, CSidebarNav } from '@coreui/react'
+import { useDispatch } from 'react-redux'
 
 export const AppSidebarNav = ({ items }) => {
+  const dispatch = useDispatch()
   const navLink = (name, icon, badge, indent = false) => {
     return (
       <>
@@ -31,12 +33,25 @@ export const AppSidebarNav = ({ items }) => {
   const navItem = (item, index, indent = false) => {
     const { component, name, badge, icon, ...rest } = item
     const Component = component
+
+    const handleClick = () => {
+      try {
+        const vw = window.innerWidth || document.documentElement.clientWidth
+        // collapse sidebar automatically on small viewports (mobile)
+        if (vw < 992) {
+          dispatch({ type: 'set', sidebarShow: false })
+        }
+      } catch (e) {
+        // ignore in non-browser env
+      }
+    }
     return (
       <Component as="div" key={index}>
         {rest.to || rest.href ? (
           <CNavLink
             {...(rest.to && { as: NavLink })}
             {...(rest.href && { target: '_blank', rel: 'noopener noreferrer' })}
+            onClick={handleClick}
             {...rest}
           >
             {navLink(name, icon, badge, indent)}

@@ -19,7 +19,7 @@ import {
 import { CChartDoughnut, CChartBar } from '@coreui/react-chartjs'
 
 const Dashboard = () => {
-  // Sample data for charts
+  // data
   const donutData = {
     labels: ['Turismo', 'Cultura', 'Gastronomía', 'Naturaleza'],
     datasets: [
