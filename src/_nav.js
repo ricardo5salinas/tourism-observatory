@@ -10,10 +10,11 @@ const _nav = [
     to: '/dashboard',
     icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
   },
+  /* faltaba una s en users*/
   {
     component: CNavItem,
     name: 'Usuarios',
-    to: '/user',
+    to: '/users',
     icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
   },
   {

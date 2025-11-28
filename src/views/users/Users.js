@@ -63,9 +63,9 @@ const Users = () => {
 	const [showCreate, setShowCreate] = useState(false)
 	const [createForm, setCreateForm] = useState({ cedula: '', nombre: '', apellido: '', rol: 'Profesor' })
 	const base = window.__API_BASE__ || 'http://localhost:3001'
-
+/* faltaba una s en users*/
 	React.useEffect(() => {
-		fetch(`${base}/user?_sort=createdAt&_order=desc`)
+		fetch(`${base}/users?_sort=createdAt&_order=desc`)
 			.then((r) => r.json())
 			.then(setUsers)
 			.catch(() => setUsers([]))
@@ -85,8 +85,8 @@ const Users = () => {
 	const handleCreate = () => {
 		setShowCreate(true)
 	}
-
-	const handlSaveCreate = () => {
+/*faltaba una e en handle y shworeate*/
+	const handleSaveCreate = () => {
 		
 		if (!createForm.cedula || !createForm.nombre) {
 			alert('Por favor rellena Cédula y Nombre')
@@ -188,8 +188,7 @@ const Users = () => {
 				</CCol>
 			</CRow>
 
-				
-				<CModal visible={showCreat} onClose={() => setShowCreate(false)}>
+				<CModal visible={showCreate} onClose={() => setShowCreate(false)}> 
 					<CModalHeader>
 						<CModalTitle>Crear nuevo usuario</CModalTitle>
 					</CModalHeader>
