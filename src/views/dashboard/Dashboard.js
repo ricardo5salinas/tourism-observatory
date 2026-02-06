@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import axiosClient from '../../api/axiosClient'
 import {
   CRow,
   CCol,
@@ -24,23 +25,26 @@ const Dashboard = () => {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
 
-  const base = (import.meta?.env?.VITE_API_BASE) || window.__API_BASE__ || 'http://localhost:3001'
-
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true)
       try {
         const [pRes, dRes, uRes] = await Promise.all([
-          fetch(`${base}/projects?_sort=createdAt&_order=desc`),
-          fetch(`${base}/documents?_sort=createdAt&_order=desc`),
-          fetch(`${base}/users?_sort=createdAt&_order=desc`),
+          axiosClient.get('/projects'),
+          axiosClient.get('/documents'),
+          axiosClient.get('/users'),
         ])
-        const [pData, dData, uData] = await Promise.all([pRes.json(), dRes.json(), uRes.json()])
-        setProjects(pData)
-        setDocuments(dData)
-        setUsers(uData)
+        const pData = pRes?.data ?? pRes
+        const dData = dRes?.data ?? dRes
+        const uData = uRes?.data ?? uRes
+        setProjects(Array.isArray(pData) ? pData : (pData?.data ?? []))
+        setDocuments(Array.isArray(dData) ? dData : (dData?.data ?? []))
+        setUsers(Array.isArray(uData) ? uData : (uData?.data ?? []))
       } catch (err) {
-        
+        console.error('Dashboard fetch error', err)
+        setProjects([])
+        setDocuments([])
+        setUsers([])
       } finally {
         setLoading(false)
       }

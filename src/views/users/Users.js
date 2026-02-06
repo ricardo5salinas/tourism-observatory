@@ -115,7 +115,35 @@ const Users = () => {
 
 	const getRole = (u) => {
 		if (!u) return 'N/D'
-		return u.rol || u.role || u.role_name || (u.roles && Array.isArray(u.roles) && u.roles[0]?.name) || 'N/D'
+		// Casos comunes: 'rol' (es), 'role', 'role_name', o { role: { role_name }} o roles: [{role_name}]
+		if (typeof u === 'string') return u
+		if (u.rol) return u.rol
+		if (u.role && typeof u.role === 'string') return u.role
+		if (u.role_name) return u.role_name
+		if (u.role && typeof u.role === 'object') {
+			if (u.role.role_name) return u.role.role_name
+			if (u.role.name) return u.role.name
+		}
+		if (Array.isArray(u.roles) && u.roles.length > 0) {
+			const r0 = u.roles[0]
+			if (!r0) return 'N/D'
+			return r0.role_name || r0.name || 'N/D'
+		}
+		return 'N/D'
+	}
+
+	const getRoleColor = (u) => {
+		const role = String(getRole(u) || '').toLowerCase()
+		if (role.includes('admin') || role.includes('administrador')) return 'primary'
+		if (role.includes('cordinator')) return 'success'
+		if (role.includes('teacher') || role.includes('profesor')) return 'info'
+		return 'secondary'
+	}
+
+	// Extrae un id fiable de diferentes formas que pueda devolver la API
+	const extractId = (u) => {
+		if (!u) return null
+		return u.id ?? u._id ?? u.userId ?? u.user_id ?? u.idNumber ?? u.dni ?? null
 	}
 
 	const formatDate = (val) => {
@@ -159,7 +187,9 @@ const Users = () => {
 		}
 		try {
 			const res = await userApi.createUser(payload)
-			const created = res?.data || res
+			const raw = res?.data ?? res
+			const created = raw?.user ?? raw?.data ?? raw ?? payload
+			if (!extractId(created)) created.id = created.id ?? created._id ?? null
 			setUsers((prev) => [created, ...prev])
 		} catch (e) {
 			alert('Error creando usuario')
@@ -170,7 +200,7 @@ const Users = () => {
 
 	const handleEdit = (user) => {
 		setEditForm({
-			id: user.id || user._id,
+			id: extractId(user),
 			dni: user.dni || user.cedula || '',
 			first_name: user.first_name || user.nombre || '',
 			last_name: user.last_name || user.apellido || '',
@@ -182,7 +212,11 @@ const Users = () => {
 
 	const handleSaveEdit = async () => {
 		if (!editForm) return
-		const id = editForm.id
+		const id = editForm.id ?? extractId(editForm)
+		if (!id) {
+			alert('Imposible actualizar: id del usuario no encontrado')
+			return
+		}
 		const payload = {
 			first_name: editForm.first_name,
 			last_name: editForm.last_name,
@@ -192,8 +226,11 @@ const Users = () => {
 		}
 		try {
 			const res = await userApi.updateUser(id, payload)
-			const updated = res?.data || res || payload
-			setUsers((prev) => prev.map((u) => (u.id === id || u._id === id ? updated : u)))
+			const raw = res?.data ?? res
+			const updated = raw?.user ?? raw?.data ?? raw ?? payload
+			// Ensure updated object has an id we can compare
+			if (!extractId(updated)) updated.id = id
+			setUsers((prev) => prev.map((u) => ((extractId(u) === id) ? updated : u)))
 			setShowEdit(false)
 			setEditForm(null)
 		} catch (e) {
@@ -208,14 +245,26 @@ const Users = () => {
 
 	const confirmDelete = async () => {
 		if (!deleteTarget) return
-		const id = deleteTarget.id || deleteTarget._id
+		const id = extractId(deleteTarget)
+		if (!id) {
+			alert('Imposible eliminar: id del usuario no encontrado')
+			return
+		}
 		try {
-			await userApi.deleteUser(id)
-			setUsers((prev) => prev.filter((u) => !(u.id === id || u._id === id)))
+			console.debug('confirmDelete: deleting id=', id, 'target=', deleteTarget)
+			const res = await userApi.deleteUser(id)
+			console.debug('confirmDelete: delete response=', res)
+			const status = res?.status ?? (res && res.data && res.data.status) ?? null
+			if (status && !(status >= 200 && status < 300)) {
+				alert('El servidor respondió con estado ' + status)
+			}
+			// Remove from local state regardless of server body when successful HTTP status
+			setUsers((prev) => prev.filter((u) => extractId(u) !== id))
 			setShowDelete(false)
 			setDeleteTarget(null)
 		} catch (e) {
-			alert('Error eliminando usuario')
+			console.error('confirmDelete error', e)
+			alert('Error eliminando usuario: ' + (e?.response?.status ? ('status ' + e.response.status) : e.message))
 		}
 	}
 
@@ -266,7 +315,7 @@ const Users = () => {
 												<CTableDataCell>{firstName}</CTableDataCell>
 												<CTableDataCell>{lastName}</CTableDataCell>
 												<CTableDataCell>
-													<CBadge color={getRole(u) === 'Administrador' ? 'primary' : getRole(u) === 'Coordinador' ? 'info' : 'secondary'}>
+													<CBadge color={getRoleColor(u)}>
 														{getRole(u)}
 													</CBadge>
 												</CTableDataCell>
