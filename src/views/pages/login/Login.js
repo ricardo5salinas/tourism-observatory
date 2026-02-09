@@ -43,6 +43,8 @@ const Login = () => {
       const token = getToken()
       if (token) {
         setSuccess('Inicio de sesión correcto. Redirigiendo...')
+         localStorage.setItem('authToken', token)
+    localStorage.setItem('userId', userId) 
         navigate('/dashboard', { replace: true })
         try {
           window.location.reload()
