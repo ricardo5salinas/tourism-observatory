@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import axiosClient from '../../api/axiosClient'
 import {
   CRow,
   CCol,
@@ -34,17 +35,17 @@ const Dashboard = () => {
           axiosClient.get('/documents'),
           axiosClient.get('/users'),
         ])
-        
-        // Extraer datos manejando la estructura del backend
-        const projectsData = pRes.data?.projects || (Array.isArray(pRes.data) ? pRes.data : [])
-        const documentsData = dRes.data?.documents || (Array.isArray(dRes.data) ? dRes.data : [])
-        const usersData = uRes.data?.users || (Array.isArray(uRes.data) ? uRes.data : [])
-        
-        setProjects(projectsData)
-        setDocuments(documentsData)
-        setUsers(usersData)
+        const pData = pRes?.data ?? pRes
+        const dData = dRes?.data ?? dRes
+        const uData = uRes?.data ?? uRes
+        setProjects(Array.isArray(pData) ? pData : (pData?.data ?? []))
+        setDocuments(Array.isArray(dData) ? dData : (dData?.data ?? []))
+        setUsers(Array.isArray(uData) ? uData : (uData?.data ?? []))
       } catch (err) {
-        console.error('Error cargando datos del dashboard:', err)
+        console.error('Dashboard fetch error', err)
+        setProjects([])
+        setDocuments([])
+        setUsers([])
       } finally {
         setLoading(false)
       }

@@ -29,6 +29,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPencil, cilTrash, cilCheck } from '@coreui/icons'
+import documentsApi from '../../api/endpoints/documentsApi'
 
 const Documents = () => {
   const [documents, setDocuments] = useState([])
@@ -43,26 +44,61 @@ const Documents = () => {
 
   const lastDocument = documents.length ? documents[0] : null
 
-  
-  const documentsThisWeek = documents.filter((d) => d.createdAt && d.createdAt.startsWith('2025-11')).length
 
-  const base = (import.meta?.env?.VITE_API_BASE) || window.__API_BASE__ || 'http://localhost:3001'
+  const documentsThisWeek = documents.filter((d) => d.created_at && d.created_at.startsWith(new Date().getFullYear().toString())).length
 
-  
-  React.useEffect(() => {
-    fetch(`${base}/documents?_sort=createdAt&_order=desc`)
-      .then((r) => r.json())
-      .then(setDocuments)
-      .catch(() => setDocuments([]))
-    fetch(`${base}/users`)
-      .then((r) => r.json())
-      .then((data) => setUsersList(data.map((u) => u.fullName || `${u.nombre} ${u.apellido}`)))
-      .catch(() => setUsersList([]))
-    fetch(`${base}/projects`)
-      .then((r) => r.json())
-      .then(setProjectsList)
-      .catch(() => setProjectsList([]))
-  }, [])
+React.useEffect(() => {
+  const load = async () => {
+    try {
+      const docsRes = await documentsApi.getDocuments(true)
+      console.log('📦 Respuesta completa:', docsRes)
+      
+      // axios devuelve los datos en docsRes.data
+      const rawData = docsRes.data
+      console.log('📋 Raw data:', rawData)
+      
+      // El backend devuelve { ok: true, documents: [...] }
+      const arr = rawData?.documents || []
+      console.log('✅ Array final:', arr)
+      
+      const normalized = arr.map((p) => {
+        const createdAt = p.created_at || p.createdAt || ''
+        const updatedAt = p.updated_at || p.updatedAt || ''
+        const authorName = p.author_name || p.authorName || ''
+        const category = p.type || p.category || ''
+        
+        return {
+          id: p.id,
+          title: p.title || p.name || '',
+          description: p.description || p.desc || '',
+          category,
+          published_at: p.published_at || p.publishedAt || '',
+          file_url: p.file_url || p.fileUrl || p.file || '',
+          author_id: p.author_id ?? p.authorId ?? p.user_id ?? null,
+          project_id: p.project_id ?? p.projectId ?? null,
+          location_id: p.location_id ?? p.locationId ?? null,
+          created_at: createdAt,
+          updated_at: updatedAt,
+          createdAt,
+          updatedAt,
+          author_name: authorName,
+          userName: authorName,
+          user: authorName,
+          approved: p.approved || false
+        }
+      })
+      
+      console.log('🎯 Documentos normalizados:', normalized)
+      setDocuments(normalized)
+    } catch (e) {
+      console.error('❌ Error loading documents:', e)
+      setDocuments([])
+    }
+
+    // ... resto del código
+  }
+  load()
+}, [])
 
   const filtered = useMemo(() => {
     return documents.filter((d) => {
@@ -80,43 +116,93 @@ const Documents = () => {
   }
 
   const openEdit = (doc) => {
-    setEditing(doc)
-    setForm({ title: doc.title, description: doc.description || '', category: doc.category || '', file: null, user: doc.user })
-    setShowCreate(true)
-  }
+  setEditing(doc)
+  setForm({ 
+    title: doc.title, 
+    description: doc.description || '', 
+    category: doc.category || '', 
+    file: null, 
+    user: doc.user || doc.userName || doc.author_name,
+    projectId: doc.project_id || '' // ⚠️ FALTABA ESTO
+  })
+  setShowCreate(true)
+}
 
-  const save = () => {
-    if (!form.title) {
-      alert('El título es requerido')
-      return
-    }
-    if (editing) {
-      const updated = { ...editing, title: form.title, description: form.description, category: form.category, projectId: form.projectId, userName: form.user, updatedAt: new Date().toISOString().slice(0, 10) }
-      fetch(`${base}/documents/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) })
-        .then((r) => r.json())
-        .then(() => fetch(`${base}/documents?_sort=createdAt&_order=desc`).then((r) => r.json()).then(setDocuments))
-        .catch((e) => alert('Error actualizando documento'))
-    } else {
-      const now = new Date().toISOString().slice(0, 10)
-      const newDoc = { projectId: form.projectId || null, title: form.title, userName: form.user, userId: null, category: form.category || 'General', description: form.description || '', fileName: form.file?.name || '', fileUrl: '', approved: false, createdAt: now, updatedAt: now }
-      fetch(`${base}/documents`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newDoc) })
-        .then((r) => r.json())
-        .then(() => fetch(`${base}/documents?_sort=createdAt&_order=desc`).then((r) => r.json()).then(setDocuments))
-        .catch(() => alert('Error creando documento'))
-    }
-    setShowCreate(false)
+const save = async () => {
+  if (!form.title) {
+    alert('El título es requerido')
+    return
   }
+  
+  try {
+    if (editing) {
+      // Editar documento existente
+      const updated = { 
+        title: form.title, 
+        description: form.description, 
+        category: form.category, 
+        project_id: form.projectId || null, 
+        author_name: form.user,
+        type: form.category || 'General'
+      }
+      
+      await documentsApi.updateDocument(editing.id, updated)
+    } else {
+      // Crear nuevo documento
+      const now = new Date().toISOString()
+      const newDoc = { 
+        project_id: form.projectId || null, 
+        title: form.title, 
+        author_name: form.user, 
+        type: form.category || 'General', 
+        description: form.description || '', 
+        file_url: '', 
+        created_at: now, 
+        updated_at: now 
+      }
+      
+      await documentsApi.createDocument(newDoc)
+    }
+    
+    // Recargar documentos
+    const res = await documentsApi.getDocuments(true)
+    const arr = res.data?.documents || []
+    const normalized = arr.map((p) => ({
+      id: p.id,
+      title: p.title || '',
+      description: p.description || '',
+      category: p.type || p.category || '',
+      createdAt: p.created_at || p.createdAt || '',
+      updatedAt: p.updated_at || p.updatedAt || '',
+      userName: p.author_name || p.authorName || '',
+      user: p.author_name || p.authorName || '',
+      approved: p.approved || false,
+      author_id: p.author_id,
+      project_id: p.project_id,
+    }))
+    setDocuments(normalized)
+    setShowCreate(false)
+    
+  } catch (err) {
+    console.error('Error guardando:', err)
+    alert(`Error ${editing ? 'actualizando' : 'creando'} documento: ${err.message}`)
+  }
+}
 
   const remove = (d) => {
     if (!window.confirm(`Eliminar documento ${d.title}?`)) return
-    fetch(`${base}/documents/${d.id}`, { method: 'DELETE' })
+    documentsApi
+      .deleteDocument(d.id)
       .then(() => setDocuments((prev) => prev.filter((x) => x.id !== d.id)))
       .catch(() => alert('Error eliminando'))
   }
   const approve = (d) => {
-    fetch(`${base}/documents/${d.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approved: !d.approved }) })
-      .then((r) => r.json())
-      .then((updated) => setDocuments((prev) => prev.map((x) => (x.id === updated.id ? updated : x))))
+    documentsApi
+      .updateDocument(d.id, { approved: !d.approved })
+      .then((res) => {
+        const updated = res?.data ?? res
+        setDocuments((prev) => prev.map((x) => (x.id === (updated.id ?? updated.ID) ? updated : x)))
+      })
       .catch(() => alert('Error actualizando estado'))
   }
 
