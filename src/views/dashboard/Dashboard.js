@@ -18,7 +18,7 @@ import {
   CButton,
 } from '@coreui/react'
 import { CChartDoughnut, CChartBar } from '@coreui/react-chartjs'
-import axiosClient from '../../api/axiosClient'
+
 
 const Dashboard = () => {
   const [projects, setProjects] = useState([])
