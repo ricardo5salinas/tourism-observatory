@@ -237,8 +237,6 @@ const Projects = () => {
               <div className="text-medium-emphasis mb-2">Resumen de proyectos</div>
               <h3 className="mb-2">{projects.length} proyectos cargados</h3>
               <p className="mb-0 text-body-secondary">
-                Esta vista ahora trabaja con `name`, `author_id`, `status`, `start_date` y
-                `end_date`, que son los campos que valida el backend.
               </p>
             </CCardBody>
           </CCard>

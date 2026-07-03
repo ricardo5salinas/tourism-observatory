@@ -255,8 +255,6 @@ const Documents = () => {
               <div className="text-medium-emphasis mb-2">Resumen de documentos</div>
               <h3 className="mb-2">{documents.length} documentos cargados</h3>
               <p className="mb-0 text-body-secondary">
-                La creación y edición ahora usa `type`, `file_url`, `author_id`, `project_id` y
-                `published_at`, igual que el backend.
               </p>
             </CCardBody>
           </CCard>
